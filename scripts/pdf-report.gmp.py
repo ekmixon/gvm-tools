@@ -47,11 +47,7 @@ def main(gmp, args):
     check_args(args)
 
     report_id = args.argv[1]
-    if len(args.argv) == 3:
-        pdf_filename = args.argv[2]
-    else:
-        pdf_filename = args.argv[1] + ".pdf"
-
+    pdf_filename = args.argv[2] if len(args.argv) == 3 else f"{args.argv[1]}.pdf"
     pdf_report_format_id = "c402cc3e-b531-11e1-9163-406186ea4fc5"
 
     response = gmp.get_report(
@@ -82,7 +78,7 @@ def main(gmp, args):
 
     pdf_path.write_bytes(binary_pdf)
 
-    print('Done. PDF created: ' + str(pdf_path))
+    print(f'Done. PDF created: {str(pdf_path)}')
 
 
 if __name__ == '__gmp__':

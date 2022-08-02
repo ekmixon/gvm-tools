@@ -47,15 +47,13 @@ def sync_assets(gmp, filename):
                 # print('%s %s %s %s' % (host, ip, contact, location))
 
                 # check if asset is already there
-                ret = gmp.get_assets(
-                    asset_type=gmp.types.AssetType.HOST, filter='ip=%s' % ip
-                )
+                ret = gmp.get_assets(asset_type=gmp.types.AssetType.HOST, filter=f'ip={ip}')
                 if ret.xpath('asset'):
                     print('\nAsset with IP %s exist' % ip)
                     asset_id = ret.xpath('asset/@id')[0]
                     gmp.delete_asset(asset_id=asset_id)
                 else:
-                    print('Asset with ip %s does not exist. Sync...' % ip)
+                    print(f'Asset with ip {ip} does not exist. Sync...')
                     ret = gmp.create_host(name=ip, comment=comment)
 
                     if 'OK' in ret.xpath('@status_text')[0]:

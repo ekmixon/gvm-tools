@@ -129,15 +129,14 @@ def main():
 
     with protocol_class(connection, transform=transform) as protocol:
         global_vars[name] = protocol
-        global_vars['__name__'] = '__{}__'.format(name)
+        global_vars['__name__'] = f'__{name}__'
 
-        if args.protocol == PROTOCOL_GMP:
-            if args.gmp_username:
-                (username, password) = authenticate(
-                    protocol,
-                    username=args.gmp_username,
-                    password=args.gmp_password,
-                )
+        if args.protocol == PROTOCOL_GMP and args.gmp_username:
+            (username, password) = authenticate(
+                protocol,
+                username=args.gmp_username,
+                password=args.gmp_password,
+            )
 
         shell_args = Namespace(username=username, password=password)
 
@@ -176,8 +175,7 @@ def main():
 
 def enter_interactive_mode(global_vars):
     code.interact(
-        banner='GVM Interactive Console {} API {}. Type "help" to get '
-        'information about functionality.'.format(__version__, __api_version__),
+        banner=f'GVM Interactive Console {__version__} API {__api_version__}. Type "help" to get information about functionality.',
         local=dict(global_vars),
     )
 

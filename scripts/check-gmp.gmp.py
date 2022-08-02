@@ -131,8 +131,7 @@ class InstanceManager:
 
         except PermissionError:
             parser.error(
-                "The selected temporary database file {} or the parent dir has"
-                " not the correct permissions.".format(self.db)
+                f"The selected temporary database file {self.db} or the parent dir has not the correct permissions."
             )
 
     @staticmethod
@@ -196,21 +195,19 @@ class InstanceManager:
 
         if not db_entry:
             return True
-        else:
-            old = parse_date(db_entry[0])
-            new = parse_date(last_scan_end)
+        old = parse_date(db_entry[0])
+        new = parse_date(last_scan_end)
 
-            logger.debug(
-                "Old time (from db): %s\n" "New time (from rp): %s", old, new
-            )
+        logger.debug(
+            "Old time (from db): %s\n" "New time (from rp): %s", old, new
+        )
 
-            if new <= old and params_used == db_entry[1]:
-                return False
-            else:
-                # Report is newer. Delete old entry.
-                logger.debug("Delete old report for host %s", self.host)
-                self.delete_report()
-                return True
+        if new <= old and params_used == db_entry[1]:
+            return False
+        # Report is newer. Delete old entry.
+        logger.debug("Delete old report for host %s", self.host)
+        self.delete_report()
+        return True
 
     def load_local_report(self):
         """Load report from local database
@@ -223,9 +220,7 @@ class InstanceManager:
         self.cursor.execute(
             "SELECT report FROM Report WHERE host=?", (self.host,)
         )
-        db_entry = self.cursor.fetchone()
-
-        if db_entry:
+        if db_entry := self.cursor.fetchone():
             return etree.fromstring(db_entry[0])
         else:
             logger.debug("Report from host %s is not in the db", self.host)
@@ -617,17 +612,11 @@ def status(gmp, im, script_args):
             trend = trend[0]
 
             if trend in ["up", "more"]:
-                end_session(
-                    im, "GMP CRITICAL: Trend is %s." % trend, NAGIOS_CRITICAL
-                )
+                end_session(im, f"GMP CRITICAL: Trend is {trend}.", NAGIOS_CRITICAL)
             elif trend in ["down", "same", "less"]:
-                end_session(im, "GMP OK: Trend is %s." % trend, NAGIOS_OK)
+                end_session(im, f"GMP OK: Trend is {trend}.", NAGIOS_OK)
             else:
-                end_session(
-                    im,
-                    "GMP UNKNOWN: Trend is unknown: %s" % trend,
-                    NAGIOS_UNKNOWN,
-                )
+                end_session(im, f"GMP UNKNOWN: Trend is unknown: {trend}", NAGIOS_UNKNOWN)
         else:
             last_report_id = task.xpath("task/last_report/report/@id")
 
@@ -641,27 +630,16 @@ def status(gmp, im, script_args):
                 "task/last_report/report/scan_end/text()"
             )
 
-            if last_scan_end:
-                last_scan_end = last_scan_end[0]
-            else:
-                last_scan_end = ""
-
+            last_scan_end = last_scan_end[0] if last_scan_end else ""
             if im.is_old_report(last_scan_end, params_used):
                 host = script_args.hostaddress
 
                 full_report = gmp.get_report(
                     report_id=last_report_id,
-                    filter="sort-reverse=id result_hosts_only=1 "
-                    "min_cvss_base= min_qod= levels=hmlgd autofp={} "
-                    "notes=0 apply_overrides={} overrides={} first=1 rows=-1 "
-                    "delta_states=cgns host={}".format(
-                        script_args.autofp,
-                        int(script_args.overrides),
-                        int(script_args.apply_overrides),
-                        host,
-                    ),
+                    filter=f"sort-reverse=id result_hosts_only=1 min_cvss_base= min_qod= levels=hmlgd autofp={script_args.autofp} notes=0 apply_overrides={int(script_args.overrides)} overrides={int(script_args.apply_overrides)} first=1 rows=-1 delta_states=cgns host={host}",
                     details=True,
                 )
+
 
                 im.add_report(last_scan_end, params_used, full_report)
                 logger.debug("Report added to db")
@@ -745,13 +723,12 @@ def filter_report(im, report, script_args):
         else:
             end_session(
                 im,
-                "GMP UNKNOWN: Unknown result threat: %s" % threat,
+                f"GMP UNKNOWN: Unknown result threat: {threat}",
                 NAGIOS_UNKNOWN,
             )
 
-    errors = report.xpath("errors")
 
-    if errors:
+    if errors := report.xpath("errors"):
         errors = errors[0]
         if script_args.hostaddress:
             for error in errors.xpath("error"):
@@ -789,9 +766,9 @@ def filter_report(im, report, script_args):
 
     elif not any_found and script_args.hostaddress:
         print(
-            "Report did not contain vulnerabilities for IP %s"
-            % script_args.hostaddress
+            f"Report did not contain vulnerabilities for IP {script_args.hostaddress}"
         )
+
 
     if int(error_count) > 0:
         if script_args.hostaddress:
@@ -806,9 +783,9 @@ def filter_report(im, report, script_args):
 
     if script_args.report_link:
         print(
-            "https://%s/omp?cmd=get_report&report_id=%s"
-            % (script_args.hostname, report_id)
+            f"https://{script_args.hostname}/omp?cmd=get_report&report_id={report_id}"
         )
+
 
     if script_args.oid:
         print_nvt_data(
@@ -822,15 +799,15 @@ def filter_report(im, report, script_args):
     if script_args.scanend:
         end = report.xpath("//end/text()")
         end = end[0] if end else "Timestamp of scan end not given"
-        print("SCAN_END: %s" % end)
+        print(f"SCAN_END: {end}")
 
     if script_args.details:
         if script_args.hostname:
             print("GSM_Host: %s:%d" % (script_args.hostname, script_args.port))
         if script_args.gmp_username:
-            print("GMP_User: %s" % script_args.gmp_username)
+            print(f"GMP_User: {script_args.gmp_username}")
         if script_args.task:
-            print_without_pipe("Task: %s" % script_args.task)
+            print_without_pipe(f"Task: {script_args.task}")
 
     end_session(
         im,
@@ -861,16 +838,8 @@ def retrieve_nvt_data(result):
     if name:
         name = name[0]
 
-    if desc:
-        desc = desc[0]
-    else:
-        desc = ""
-
-    if port:
-        port = port[0]
-    else:
-        port = ""
-
+    desc = desc[0] if desc else ""
+    port = port[0] if port else ""
     certs = result.xpath("nvt/cert/cert_ref")
 
     dfn_list = []
@@ -898,16 +867,15 @@ def print_nvt_data(
         if key == "log" and not show_log:
             continue
         for nvt in nvt_data:
-            print_without_pipe("NVT: %s (%s) %s" % (nvt[0], key, nvt[1]))
+            print_without_pipe(f"NVT: {nvt[0]} ({key}) {nvt[1]}")
             if show_ports:
-                print_without_pipe("PORT: %s" % (nvt[3]))
+                print_without_pipe(f"PORT: {nvt[3]}")
             if descr:
-                print_without_pipe("DESCR: %s" % nvt[2])
+                print_without_pipe(f"DESCR: {nvt[2]}")
 
             if dfn and nvt[4]:
-                dfn_list = ", ".join(nvt[4])
-                if dfn_list:
-                    print_without_pipe("DFN-CERT: %s" % dfn_list)
+                if dfn_list := ", ".join(nvt[4]):
+                    print_without_pipe(f"DFN-CERT: {dfn_list}")
 
 
 def end_session(im, msg, nagios_status):
@@ -1065,9 +1033,7 @@ class FixedOffset(tzinfo):
             return (other.__offset == self.__offset) and (
                 other.__name == self.__name
             )
-        if isinstance(other, tzinfo):
-            return other == self
-        return False
+        return other == self if isinstance(other, tzinfo) else False
 
     def __getinitargs__(self):
         return (self.__offset_hours, self.__offset_minutes, self.__name)
@@ -1102,7 +1068,7 @@ def to_int(
         return 0
     if value is None:
         if required:
-            raise ParseError("Unable to read %s from %s" % (key, source_dict))
+            raise ParseError(f"Unable to read {key} from {source_dict}")
         return value
     else:
         return int(value)
@@ -1160,9 +1126,9 @@ def parse_date(datestring, default_timezone=UTC):
     tz = parse_timezone(groups, default_timezone=default_timezone)
 
     groups["second_fraction"] = int(
-        Decimal("0.%s" % (groups["second_fraction"] or 0))
-        * Decimal("1000000.0")
+        (Decimal(f'0.{groups["second_fraction"] or 0}') * Decimal("1000000.0"))
     )
+
 
     try:
         return datetime(
@@ -1188,8 +1154,8 @@ def parse_date(datestring, default_timezone=UTC):
 
 
 def main(gmp, args):
-    tmp_path = "%s/check_gmp/" % tempfile.gettempdir()
-    tmp_path_db = tmp_path + "reports.db"
+    tmp_path = f"{tempfile.gettempdir()}/check_gmp/"
+    tmp_path_db = f"{tmp_path}reports.db"
 
     parser = ArgumentParser(
         prog="check-gmp",
@@ -1219,8 +1185,9 @@ def main(gmp, args):
         "--cache",
         nargs="?",
         default=tmp_path_db,
-        help="Path to cache file. Default: %s." % tmp_path_db,
+        help=f"Path to cache file. Default: {tmp_path_db}.",
     )
+
 
     parser.add_argument(
         "--clean", action="store_true", help="Activate to clean the database."
@@ -1396,7 +1363,7 @@ def main(gmp, args):
     try:
         gmp.get_version()
     except Exception as e:  # pylint: disable=broad-except
-        end_session(im, "GMP CRITICAL: %s" % str(e), NAGIOS_CRITICAL)
+        end_session(im, f"GMP CRITICAL: {str(e)}", NAGIOS_CRITICAL)
 
     if script_args.ping:
         ping(gmp, im)

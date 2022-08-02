@@ -22,7 +22,8 @@ import sys
 
 def check_args(args):
     len_args = len(args.script) - 1
-    message = """
+    if len_args != 2:
+        message = """
         This script makes an alert scan
         It needs two parameters after the script name.
 
@@ -33,7 +34,6 @@ def check_args(args):
             $ gvm-script --gmp-username name --gmp-password pass \
 ssh --hostname <gsm> scripts/start-multiple-alert-scan.gmp.py <sender_email> <receiver_email>
     """
-    if len_args != 2:
         print(message)
         sys.exit()
 
@@ -42,8 +42,10 @@ ssh --hostname <gsm> scripts/start-multiple-alert-scan.gmp.py <sender_email> <re
 def get_port_list_names(gmp):
     res = gmp.get_port_lists()
     port_names_list = [""]
-    for name in res.findall("port_list/name"):
-        port_names_list.append(str(name.text))
+    port_names_list.extend(
+        str(name.text) for name in res.findall("port_list/name")
+    )
+
     return port_names_list
 
 
@@ -78,7 +80,7 @@ def get_config(gmp, debug=False):
         if template_abbreviation_mapper.get(template, "-") == name:
             config_id = cid
             if debug:
-                print("%s: %s" % (name, config_id))
+                print(f"{name}: {config_id}")
             break
     # check for existence of the desired config
     if config_id == "-":
@@ -101,7 +103,7 @@ def get_target(gmp, debug=False):
     # iterate over existing targets and find a vacant targetName
     while exists:
         exists = False
-        target_name = "targetName%s" % str(counter)
+        target_name = f"targetName{str(counter)}"
         for target in targets.xpath('target'):
             name = target.xpath('name/text()')[0]
             if name == target_name:
@@ -110,14 +112,14 @@ def get_target(gmp, debug=False):
         counter += 1
 
     if debug:
-        print("target name: %s" % target_name)
+        print(f"target name: {target_name}")
 
     # iterate over existing port lists and find a vacant name
     new_port_list_name = "portlistName"
     counter = 0
 
     while True:
-        portlist_name = '%s%s' % (new_port_list_name, str(counter))
+        portlist_name = f'{new_port_list_name}{str(counter)}'
         if portlist_name not in get_port_list_names(gmp):
             break
         counter += 1
@@ -144,7 +146,7 @@ def get_alerts(gmp, sender_email, recipient_email, debug=False):
     alert_name = recipient_email
 
     # create alert if necessary
-    alert_object = gmp.get_alerts(filter='name=%s' % alert_name)
+    alert_object = gmp.get_alerts(filter=f'name={alert_name}')
     alert_id = None
     alert = alert_object.xpath('alert')
     if len(alert) == 0:
@@ -177,19 +179,19 @@ should not have received it.
                 recipient_email: "to_address",
             },
         )
-        alert_object = gmp.get_alerts(filter='name=%s' % recipient_email)
+        alert_object = gmp.get_alerts(filter=f'name={recipient_email}')
         alert = alert_object.xpath('alert')
         alert_id = alert[0].get('id', 'no id found')
     else:
         alert_id = alert[0].get('id', 'no id found')
         if debug:
-            print("alert_id: %s" % str(alert_id))
+            print(f"alert_id: {str(alert_id)}")
 
     # second configurable alert name
-    alert_name2 = "%s-2" % recipient_email
+    alert_name2 = f"{recipient_email}-2"
 
     # create second alert if necessary
-    alert_object2 = gmp.get_alerts(filter='name=%s' % alert_name2)
+    alert_object2 = gmp.get_alerts(filter=f'name={alert_name2}')
     alert_id2 = None
     alert2 = alert_object2.xpath('alert')
     if len(alert2) == 0:
@@ -221,13 +223,13 @@ should not have received it.
                 recipient_email: "to_address",
             },
         )
-        alert_object2 = gmp.get_alerts(filter='name=%s' % recipient_email)
+        alert_object2 = gmp.get_alerts(filter=f'name={recipient_email}')
         alert2 = alert_object2.xpath('alert')
         alert_id2 = alert2[0].get('id', 'no id found')
     else:
         alert_id2 = alert2[0].get('id', 'no id found')
         if debug:
-            print("alert_id2: %s" % str(alert_id2))
+            print(f"alert_id2: {str(alert_id2)}")
 
     return (alert_id, alert_id2)
 
@@ -257,7 +259,7 @@ def create_and_start_task(
     task_id = res.xpath('@id')[0]
     gmp.start_task(task_id)
 
-    print('Task started: %s' % task_name)
+    print(f'Task started: {task_name}')
 
     if debug:
         # Stop the task (for performance reasons)

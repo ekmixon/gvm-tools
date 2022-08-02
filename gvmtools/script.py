@@ -86,15 +86,14 @@ def main():
     try:
         with protocol_class(connection, transform=transform) as protocol:
             global_vars[name] = protocol
-            global_vars['__name__'] = '__{}__'.format(name)
+            global_vars['__name__'] = f'__{name}__'
 
-            if args.protocol == PROTOCOL_GMP:
-                if args.gmp_username:
-                    (username, password) = authenticate(
-                        protocol,
-                        username=args.gmp_username,
-                        password=args.gmp_password,
-                    )
+            if args.protocol == PROTOCOL_GMP and args.gmp_username:
+                (username, password) = authenticate(
+                    protocol,
+                    username=args.gmp_username,
+                    password=args.gmp_password,
+                )
 
             argv = [os.path.abspath(args.scriptname), *args.scriptargs]
 

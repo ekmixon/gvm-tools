@@ -36,21 +36,20 @@ class Config:
     def __init__(self):
         self._config = configparser.ConfigParser(default_section='main')
 
-        self._config = {}
+        self._config = {
+            'gmp': dict(username='', password=''),
+            'ssh': dict(
+                username='gmp',
+                password='gmp',
+                port=DEFAULT_SSH_PORT,
+                hostname=DEFAULT_HOSTNAME,
+            ),
+            'unixsocket': dict(socketpath=DEFAULT_UNIX_SOCKET_PATH),
+            'tls': dict(port=DEFAULT_GVM_PORT, hostname=DEFAULT_HOSTNAME),
+        }
 
-        self._config['gmp'] = dict(username='', password='')
-        self._config['ssh'] = dict(
-            username='gmp',
-            password='gmp',
-            port=DEFAULT_SSH_PORT,
-            hostname=DEFAULT_HOSTNAME,
-        )
-        self._config['unixsocket'] = dict(socketpath=DEFAULT_UNIX_SOCKET_PATH)
-        self._config['tls'] = dict(
-            port=DEFAULT_GVM_PORT, hostname=DEFAULT_HOSTNAME
-        )
 
-        self._defaults = dict()
+        self._defaults = {}
 
     def load(self, filepath):
         path = filepath.expanduser()
@@ -78,13 +77,10 @@ class Config:
                 continue
 
             for key, value in config.items(section):
-                self._config.setdefault(section, dict())[key] = value
+                self._config.setdefault(section, {})[key] = value
 
     def defaults(self):
         return self._defaults
 
     def get(self, section, name):
-        if not section in self._config:
-            return None
-
-        return self._config[section].get(name)
+        return None if section not in self._config else self._config[section].get(name)

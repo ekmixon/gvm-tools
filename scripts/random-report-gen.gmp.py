@@ -60,7 +60,7 @@ HELP_TEXT = """
 
 def generate_ports(n_ports):
     protocol = ['/tcp', '/udp']
-    return [str(randrange(0, 65536)) + choice(protocol) for i in range(n_ports)]
+    return [str(randrange(0, 65536)) + choice(protocol) for _ in range(n_ports)]
 
 
 def generate_report_elem(task, **kwargs):
@@ -152,7 +152,7 @@ def generate_inner_report(rep_id, n_results, n_hosts, data, **kwargs):
 def generate_result_elem(vulns, host_ip, host_port, host_asset, host_name):
     result_elem = e.Element('result', {'id': generate_uuid()})
 
-    e.SubElement(result_elem, 'name').text = "a_result" + generate_id()
+    e.SubElement(result_elem, 'name').text = f"a_result{generate_id()}"
     own = e.SubElement(result_elem, 'owner')
     e.SubElement(own, 'name').text = generate_id()
 
@@ -332,17 +332,15 @@ def generate_reports(task, n_reports, with_gauss, **kwargs):
 def generate_data(gmp, n_tasks, **kwargs):
     for i in range(n_tasks):
         index = '{{0:0>{}}}'.format(len(str(n_tasks)))
-        task_name = 'Task_for_GenReport:_{}'.format(index.format(i + 1))
+        task_name = f'Task_for_GenReport:_{index.format(i + 1)}'
 
         gmp.create_container_task(task_name)
 
-        task_id = gmp.get_tasks(filter='name={}'.format(task_name)).xpath(
-            '//@id'
-        )[0]
+        task_id = gmp.get_tasks(filter=f'name={task_name}').xpath('//@id')[0]
 
         reports = generate_reports(task=(task_id, task_name), **kwargs)
 
-        for report in reports[0:]:
+        for report in reports[:]:
             gmp.import_report(report, task_id=task_id, in_assets=True)
 
 

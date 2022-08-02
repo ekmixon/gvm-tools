@@ -38,58 +38,46 @@ def numerical_option(statement, list_range):
         return choice
     else:
         return numerical_option(
-            "Please enter valid number from {} to {}...".format(1, list_range),
-            list_range,
+            f"Please enter valid number from 1 to {list_range}...", list_range
         )
 
 
 def interactive_options(gmp, task, keywords):
-    options_dict = {}
-    options_dict['config'] = gmp.get_configs()
+    options_dict = {'config': gmp.get_configs()}
     options_dict['scanner'] = gmp.get_scanners()
     options_dict['target'] = gmp.get_targets()
 
-    for option in options_dict:
+    for option, object_xml in options_dict.items():
         object_dict, object_list = {}, []
         object_id = task.find(option).get('id')
-        object_xml = options_dict[option]
-
         for i in object_xml.findall(option):
             object_dict[i.find('name').text] = i.xpath('@id')[0]
             object_list.append(i.find('name').text)
 
         if object_id in object_dict.values():
-            keywords['{}_id'.format(option)] = object_id
-        elif object_id not in object_dict.values() and len(object_dict) != 0:
+            keywords[f'{option}_id'] = object_id
+        elif len(object_dict) != 0:
             response = yes_or_no(
-                "\nRequired Field: failed to detect {}_id: {}... "
-                "\nWould you like to select from available options, or exit "
-                "the script?".format(
-                    option, task.xpath('{}/@id'.format(option))[0]
-                )
+                f"\nRequired Field: failed to detect {option}_id: {task.xpath(f'{option}/@id')[0]}... \nWould you like to select from available options, or exit the script?"
             )
 
+
             if response is True:
-                counter = 1
-                print("{} options:".format(option.capitalize()))
-                for j in object_list:
-                    print("    {} - {}".format(counter, j))
-                    counter += 1
+                print(f"{option.capitalize()} options:")
+                for counter, j in enumerate(object_list, start=1):
+                    print(f"    {counter} - {j}")
                 answer = numerical_option(
                     "\nPlease enter the number of your choice.",
                     len(object_list),
                 )
-                keywords['{}_id'.format(option)] = object_dict[
-                    object_list[answer - 1]
-                ]
+                keywords[f'{option}_id'] = object_dict[object_list[answer - 1]]
+
             else:
                 print("\nTerminating...")
                 sys.exit()
         else:
             error_and_exit(
-                "Failed to detect {}_id"
-                "\nThis field is required therefore the script is unable to "
-                "continue.\n".format(option)
+                f"Failed to detect {option}_id\nThis field is required therefore the script is unable to continue.\n"
             )
 
 

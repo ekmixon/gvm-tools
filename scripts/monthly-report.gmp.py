@@ -100,11 +100,7 @@ def print_result_tables(gmp: Gmp, reports_xml: e.Element) -> None:
             hostname = host.xpath(
                 'detail/name[text()="hostname"]/../' 'value/text()'
             )
-            if len(hostname) > 0:
-                hostname = str(hostname[0])
-            else:
-                hostname = ""
-
+            hostname = str(hostname[0]) if len(hostname) > 0 else ""
             ip = host.xpath('ip/text()')[0]
             high = host.xpath('result_count/hole/page/text()')[0]
             medium = host.xpath('result_count/warning/page/text()')[0]

@@ -47,7 +47,7 @@ def create_config(gmp, cert_bund_name):
         'info/cert_bund_adv/raw_data/Advisory/CVEList/CVE/text()'
     )
 
-    nvt_dict = dict()
+    nvt_dict = {}
     counter = 0
 
     for cve in list_cves:
@@ -71,7 +71,7 @@ def create_config(gmp, cert_bund_name):
 
     # Create new config
     copy_id = '085569ce-73ed-11df-83c3-002264764cea'
-    config_name = 'scanconfig_for_%s' % cert_bund_name
+    config_name = f'scanconfig_for_{cert_bund_name}'
     config_id = ''
 
     try:

@@ -43,11 +43,7 @@ def print_assets(gmp, appname):
     for host in hosts:
         ip = host.xpath('ip/text()')
         hostname = host.xpath('detail/name[text()="hostname"]/../value/text()')
-        if len(hostname) == 0:
-            hostname = ""
-        else:
-            hostname = hostname[0]
-
+        hostname = "" if len(hostname) == 0 else hostname[0]
         print('{ip} ({hostname})'.format(ip=ip, hostname=hostname))
         apps = host.xpath(
             'detail/name[text() = "App"]/../value['

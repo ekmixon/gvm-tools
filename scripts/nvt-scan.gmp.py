@@ -66,7 +66,7 @@ def create_config(gmp, nvt_oid):
         )
 
     except GvmError:
-        res = gmp.get_configs(filter='name=%s' % config_name)
+        res = gmp.get_configs(filter=f'name={config_name}')
         config_id = res.xpath('config/@id')[0]
 
     return config_id
@@ -77,7 +77,7 @@ def create_target(gmp, name):
         res = gmp.create_target(name, hosts=[name])
         target_id = res.xpath('@id')[0]
     except GvmError:
-        res = gmp.get_targets(filter='name=%s hosts=%s' % (name, name))
+        res = gmp.get_targets(filter=f'name={name} hosts={name}')
         target_id = res.xpath('target/@id')[0]
 
     return target_id
@@ -88,11 +88,7 @@ def create_and_start_task(gmp, name, nvt_oid, config_id, target_id):
     scanner_id = '08b69003-5fc2-4037-a479-93b440211c73'
 
     # Create task
-    task_name = '%s_%s_%s' % (
-        name,
-        nvt_oid,
-        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    )
+    task_name = f"{name}_{nvt_oid}_{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     res = gmp.create_task(task_name, config_id, target_id, scanner_id)
     task_id = res.xpath('@id')[0]
 

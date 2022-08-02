@@ -70,7 +70,7 @@ def execute_send_delta_emails(sc, **kwargs):
 
     print('Retrieving task list ...')
 
-    task_filter = 'tag=%s' % task_tag
+    task_filter = f'tag={task_tag}'
     tasks = gmp.get_tasks(filter=task_filter).xpath('task')
     print('Found %d task(s) with tag "%s".' % (len(tasks), task_tag))
 
@@ -149,7 +149,7 @@ def execute_send_delta_emails(sc, **kwargs):
             # raise # in case an error should stop the script
             continue  # ignore the problem for the time being
 
-    print("\nCheck will be repeated in {} minutes...\n".format(interval))
+    print(f"\nCheck will be repeated in {interval} minutes...\n")
     sc.enter(
         interval * 60,
         1,
@@ -176,19 +176,19 @@ def main(gmp, args):
     mta_password = 'mysecret'
 
     print('send_delta_alerts starting up with following settings:')
-    print('User:          %s' % args.username)
+    print(f'User:          {args.username}')
     print('Interval:      %d minutes' % interval)
-    print('Task tag:      %s' % task_tag)
-    print('Email subject: %s' % email_subject)
-    print('From Address:  %s' % from_address)
-    print('To Addresses:  %s' % to_addresses)
-    print('MTA Address:   %s' % mta_address)
-    print('MTA Port:      %s' % mta_port)
-    print('MTA User:      %s' % mta_user)
+    print(f'Task tag:      {task_tag}')
+    print(f'Email subject: {email_subject}')
+    print(f'From Address:  {from_address}')
+    print(f'To Addresses:  {to_addresses}')
+    print(f'MTA Address:   {mta_address}')
+    print(f'MTA Port:      {mta_port}')
+    print(f'MTA User:      {mta_user}')
     print('MTA Password:  <will not be printed here>')
     print()
 
-    print('Entering loop with interval %s minutes ...' % interval)
+    print(f'Entering loop with interval {interval} minutes ...')
 
     schedule = sched.scheduler(time.time, time.sleep)
 

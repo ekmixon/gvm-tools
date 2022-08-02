@@ -48,9 +48,9 @@ def parse_tags(tags: List[str]) -> List[str]:
     for tag in tags:
         try:
             UUID(tag, version=4)
-            filter_tags.append('tag_id="{}"'.format(tag))
+            filter_tags.append(f'tag_id="{tag}"')
         except ValueError:
-            filter_tags.append('tag="{}"'.format(tag))
+            filter_tags.append(f'tag="{tag}"')
 
     return filter_tags
 
@@ -67,28 +67,26 @@ def parse_period(period: List[str]) -> Tuple[date, date]:
         s_year, s_month, s_day = map(int, period[0].split('/'))
     except ValueError as e:
         error_and_exit(
-            'Start date [{}] is not a correct date format:\n{}'.format(
-                period[0], e.args[0]
-            )
+            f'Start date [{period[0]}] is not a correct date format:\n{e.args[0]}'
         )
+
     try:
         e_year, e_month, e_day = map(int, period[1].split('/'))
     except ValueError as e:
         error_and_exit(
-            'End date [{}] is not a correct date format:\n{}'.format(
-                period[1], e.args[0]
-            )
+            f'End date [{period[1]}] is not a correct date format:\n{e.args[0]}'
         )
+
 
     try:
         period_start = date(s_year, s_month, s_day)
     except ValueError as e:
-        error_and_exit('Start date: {}'.format(e.args[0]))
+        error_and_exit(f'Start date: {e.args[0]}')
 
     try:
         period_end = date(e_year, e_month, e_day)
     except ValueError as e:
-        error_and_exit('End date: {}'.format(e.args[0]))
+        error_and_exit(f'End date: {e.args[0]}')
 
     if period_end < period_start:
         error_and_exit('The start date seems to after the end date.')
@@ -178,11 +176,8 @@ def generate_task_filter(
     period_filter = 'last>{0} and last<{1}'.format(
         period_start.isoformat(), period_end.isoformat()
     )
-    filter_parts = []
     if tags:
-        for tag in tags:
-            filter_parts.append('{} and {}'.format(period_filter, tag))
-
+        filter_parts = [f'{period_filter} and {tag}' for tag in tags]
         tags_filter = ' or '.join(filter_parts)
         task_filter += tags_filter
     else:
@@ -199,12 +194,13 @@ def get_last_reports_from_tasks(gmp: Gmp, task_filter: str) -> List[str]:
 
     """
 
-    print('Filtering the task with the filter term [{}]'.format(task_filter))
+    print(f'Filtering the task with the filter term [{task_filter}]')
 
     tasks_xml = gmp.get_tasks(filter=task_filter)
-    reports = []
-    for report in tasks_xml.xpath('task/last_report/report/@id'):
-        reports.append(str(report))
+    reports = [
+        str(report)
+        for report in tasks_xml.xpath('task/last_report/report/@id')
+    ]
 
     # remove duplicates ... just in case
     reports = list(dict.fromkeys(reports))
@@ -258,7 +254,7 @@ def combine_reports(
                     ignore_pagination=True,
                 ).find('report')
         except GvmError:
-            print("Could not find the report [{}]".format(report))
+            print(f"Could not find the report [{report}]")
         for port in current_report.xpath('report/ports/port'):
             ports_elem.append(port)
         for result in current_report.xpath('report/results/result'):
@@ -280,7 +276,7 @@ def send_report(
     period_end: the end date
     """
 
-    task_name = 'Consolidated Report [{} - {}]'.format(period_start, period_end)
+    task_name = f'Consolidated Report [{period_start} - {period_end}]'
 
     res = gmp.create_container_task(
         name=task_name, comment='Created with gvm-tools.'
@@ -303,16 +299,11 @@ def main(gmp: Gmp, args: Namespace) -> None:
     period_start, period_end = parse_period(period=parsed_args.period)
 
     print(
-        'Combining reports from tasks within the time period [{}, {}]'.format(
-            period_start, period_end
-        )
+        f'Combining reports from tasks within the time period [{period_start}, {period_end}]'
     )
 
-    # Generate Task Filter
-    filter_tags = None
-    if parsed_args.tags:
-        filter_tags = parse_tags(tags=parsed_args.tags)
 
+    filter_tags = parse_tags(tags=parsed_args.tags) if parsed_args.tags else None
     task_filter = generate_task_filter(
         period_start=period_start,
         period_end=period_end,
@@ -322,31 +313,23 @@ def main(gmp: Gmp, args: Namespace) -> None:
     # Find reports
     reports = get_last_reports_from_tasks(gmp=gmp, task_filter=task_filter)
 
-    print("Combining {} found reports.".format(len(reports)))
+    print(f"Combining {len(reports)} found reports.")
 
     filter_term = ''
     if parsed_args.filter_term:
         filter_term = ' '.join(parsed_args.filter_term)
-        print(
-            'Filtering the results by the following filter term [{}]'.format(
-                filter_term
-            )
-        )
+        print(f'Filtering the results by the following filter term [{filter_term}]')
     elif parsed_args.filter_id:
         try:
             filter_xml = gmp.get_filter(filter_id=parsed_args.filter_id).find(
                 'filter'
             )
             print(
-                'Filtering the results by the following filter term '
-                '[{}]'.format(filter_xml.find('term').text)
+                f"Filtering the results by the following filter term [{filter_xml.find('term').text}]"
             )
+
         except GvmError:
-            print(
-                "Filter with the ID [{}] is not existing.".format(
-                    parsed_args.filter_id
-                )
-            )
+            print(f"Filter with the ID [{parsed_args.filter_id}] is not existing.")
     else:
         print('No results filter given.')
 
@@ -366,7 +349,7 @@ def main(gmp: Gmp, args: Namespace) -> None:
         period_end=period_end,
     )
 
-    print("Successfully imported new consolidated report [{}]".format(report))
+    print(f"Successfully imported new consolidated report [{report}]")
 
 
 if __name__ == '__gmp__':

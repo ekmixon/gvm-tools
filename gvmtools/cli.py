@@ -112,16 +112,8 @@ def main():
 
     connection = create_connection(**vars(args))
 
-    if args.raw:
-        transform = None
-    else:
-        transform = CheckCommandTransform()
-
-    if args.protocol == PROTOCOL_OSP:
-        protocol_class = Osp
-    else:
-        protocol_class = Gmp
-
+    transform = None if args.raw else CheckCommandTransform()
+    protocol_class = Osp if args.protocol == PROTOCOL_OSP else Gmp
     try:
         with protocol_class(connection, transform=transform) as protocol:
 
@@ -129,8 +121,9 @@ def main():
                 # Ask for password if none are given
                 if args.gmp_username and not args.gmp_password:
                     args.gmp_password = getpass.getpass(
-                        'Enter password for ' + args.gmp_username + ': '
+                        f'Enter password for {args.gmp_username}: '
                     )
+
 
                 if args.gmp_username:
                     protocol.authenticate(args.gmp_username, args.gmp_password)
@@ -142,7 +135,7 @@ def main():
 
             if args.duration:
                 duration = time.time() - starttime
-                print('Elapsed time: {} seconds'.format(duration))
+                print(f'Elapsed time: {duration} seconds')
             elif args.pretty:
                 pretty_print(result)
             else:

@@ -66,7 +66,7 @@ def get_config(gmp, config, debug=False):
         if template_abbreviation_mapper.get(config) == name:
             config_id = cid
             if debug:
-                print(name + ": " + config_id)
+                print(f"{name}: {config_id}")
             break
 
     return config_id
@@ -85,13 +85,15 @@ def get_target(
         target_name = "target"
     targets = gmp.get_targets(filter=target_name)
     existing_targets = [""]
-    for target in targets.findall("target"):
-        existing_targets.append(str(target.find('name').text))
+    existing_targets.extend(
+        str(target.find('name').text) for target in targets.findall("target")
+    )
+
     counter = 0
     # iterate over existing targets and find a vacant targetName
     if target_name in existing_targets:
         while True:
-            tmp_name = "{} ({})".format(target_name, str(counter))
+            tmp_name = f"{target_name} ({str(counter)})"
             if tmp_name in existing_targets:
                 counter += 1
             else:
@@ -99,13 +101,15 @@ def get_target(
                 break
 
     if debug:
-        print("target name: {}".format(target_name))
+        print(f"target name: {target_name}")
 
     if not port_list_id:
         existing_port_lists = [""]
         port_lists_tree = gmp.get_port_lists()
-        for plist in port_lists_tree.findall("port_list"):
-            existing_port_lists.append(str(plist.find('name').text))
+        existing_port_lists.extend(
+            str(plist.find('name').text)
+            for plist in port_lists_tree.findall("port_list")
+        )
 
         print(existing_port_lists)
 
@@ -115,7 +119,7 @@ def get_target(
         if port_list_name in existing_port_lists:
             counter = 0
             while True:
-                tmp_name = "{} ({})".format(port_list_name, str(counter))
+                tmp_name = f"{port_list_name} ({str(counter)})"
                 if tmp_name in existing_port_lists:
                     counter += 1
                 else:
@@ -126,12 +130,12 @@ def get_target(
         # create port list
         port_list_id = port_list.xpath('@id')[0]
         if debug:
-            print("New Portlist-name:\t{}".format(str(port_list_name)))
-            print("New Portlist-id:\t{}".format(str(port_list_id)))
+            print(f"New Portlist-name:\t{str(port_list_name)}")
+            print(f"New Portlist-id:\t{str(port_list_id)}")
 
     # integrate port list id into create_target
     res = gmp.create_target(target_name, hosts=hosts, port_list_id=port_list_id)
-    print("New target '{}' created.".format(target_name))
+    print(f"New target '{target_name}' created.")
     return res.xpath('@id')[0]
 
 
@@ -144,11 +148,11 @@ def get_alert(
 ):
 
     # create alert if necessary
-    alert_object = gmp.get_alerts(filter='name={}'.format(alert_name))
+    alert_object = gmp.get_alerts(filter=f'name={alert_name}')
     alert = alert_object.xpath('alert')
 
     if len(alert) == 0:
-        print("creating new alert {}".format(alert_name))
+        print(f"creating new alert {alert_name}")
         gmp.create_alert(
             alert_name,
             event=gmp.types.AlertEvent.TASK_RUN_STATUS_CHANGED,
@@ -179,12 +183,12 @@ should not have received it.
             },
         )
 
-        alert_object = gmp.get_alerts(filter='name={}'.format(recipient_email))
+        alert_object = gmp.get_alerts(filter=f'name={recipient_email}')
         alert = alert_object.xpath('alert')
 
     alert_id = alert[0].get('id', 'no id found')
     if debug:
-        print("alert_id: {}".format(str(alert_id)))
+        print(f"alert_id: {str(alert_id)}")
 
     return alert_id
 
@@ -205,14 +209,12 @@ def create_and_start_task(
     debug: bool = False,
 ):
     # Create the task
-    task_name = "Alert Scan for Alert {}".format(alert_name)
-    tasks = gmp.get_tasks(filter='name="{}"'.format(task_name))
+    task_name = f"Alert Scan for Alert {alert_name}"
+    tasks = gmp.get_tasks(filter=f'name="{task_name}"')
     task_objects = tasks.findall('task')
     print(task_objects)
     if task_objects:
-        task_name = "Alert Scan for Alert {} ({})".format(
-            alert_name, len(task_objects)
-        )
+        task_name = f"Alert Scan for Alert {alert_name} ({len(task_objects)})"
 
     task_comment = "Alert Scan"
     res = gmp.create_task(
@@ -366,39 +368,29 @@ def main(gmp, args):
         script_args.alert_name = script_args.recipient_email
 
     # use existing config from argument
-    if not script_args.scan_config_id:
-        config_id = get_config(gmp, script_args.config)
-    else:
-        config_id = script_args.scan_config_id
-
+    config_id = script_args.scan_config_id or get_config(gmp, script_args.config)
     # create new target or use existing one from id
-    if not script_args.target_id:
-        target_id = get_target(
-            gmp,
-            target_name=script_args.target_name,
-            hosts=script_args.hosts,
-            ports=script_args.ports,
-            port_list_name=script_args.port_list_name,
-            port_list_id=script_args.port_list_id,
-        )
-    else:
-        target_id = script_args.target_id
+    target_id = script_args.target_id or get_target(
+        gmp,
+        target_name=script_args.target_name,
+        hosts=script_args.hosts,
+        ports=script_args.ports,
+        port_list_name=script_args.port_list_name,
+        port_list_id=script_args.port_list_id,
+    )
+
     alert_id = get_alert(
         gmp,
         script_args.sender_email,
         script_args.recipient_email,
         script_args.alert_name,
     )
-    if not script_args.scanner_id:
-        scanner_id = get_scanner(gmp)
-    else:
-        scanner_id = script_args.scanner_id
-
+    scanner_id = script_args.scanner_id or get_scanner(gmp)
     create_and_start_task(
         gmp, config_id, target_id, scanner_id, alert_id, script_args.alert_name
     )
 
-    print('Task started: ' + task_name)
+    print(f'Task started: {task_name}')
 
     print("\nScript finished\n")
 

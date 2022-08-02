@@ -39,10 +39,7 @@ class Table:
         self.divider = divider
 
     def _calculate_dimensions(self):
-        column_sizes = []
-
-        for column in self.heading:
-            column_sizes.append(len(column))
+        column_sizes = [len(column) for column in self.heading]
 
         for row in self.rows:
             for i, column in enumerate(row):
@@ -55,15 +52,13 @@ class Table:
         return column_sizes
 
     def _create_column(self, column, size):
-        return '{}{}'.format(column, ' ' * (size - len(column)))
+        return f"{column}{' ' * (size - len(column))}"
 
     def _create_row(self, columns):
         return self.divider.join(columns)
 
     def __str__(self):
         column_sizes = self._calculate_dimensions()
-
-        row_strings = []
 
         heading_columns = []
         heading_divider_columns = []
@@ -76,8 +71,10 @@ class Table:
                 self._create_column('-' * column_size, column_size)
             )
 
-        row_strings.append(self._create_row(heading_columns))
-        row_strings.append(self._create_row(heading_divider_columns))
+        row_strings = [
+            self._create_row(heading_columns),
+            self._create_row(heading_divider_columns),
+        ]
 
         for row in self.rows:
             row_columns = []
@@ -97,13 +94,10 @@ def yes_or_no(question):
     Arguments:
         question (str): The condition the user should answer
     """
-    reply = str(input(question + ' (y/n): ')).lower().strip()
+    reply = str(input(f'{question} (y/n): ')).lower().strip()
     if reply[0] == ('y'):
         return True
-    if reply[0] == ('n'):
-        return False
-    else:
-        return yes_or_no("Please enter 'y' or 'n'")
+    return False if reply[0] == ('n') else yes_or_no("Please enter 'y' or 'n'")
 
 
 def error_and_exit(msg):
@@ -112,22 +106,17 @@ def error_and_exit(msg):
     Arguments:
         msg (str): The error message, that will be printed
     """
-    print("\nError: {}\n".format(msg), file=sys.stderr)
+    print(f"\nError: {msg}\n", file=sys.stderr)
     sys.exit(1)
 
 
 def generate_random_ips(count: int):
     """Generate count random IPv4s"""
-    exclude_127 = [i for i in range(1, 256)]
+    exclude_127 = list(range(1, 256))
     exclude_127.remove(127)
     return [
-        '{}.{}.{}.{}'.format(
-            choice(exclude_127),
-            randrange(0, 256),
-            randrange(0, 256),
-            randrange(1, 255),
-        )
-        for i in range(count)
+        f'{choice(exclude_127)}.{randrange(0, 256)}.{randrange(0, 256)}.{randrange(1, 255)}'
+        for _ in range(count)
     ]
 
 
@@ -153,9 +142,9 @@ def create_xml_tree(xml_doc):
         xml_tree = etree.parse(xml_doc)
         xml_tree = xml_tree.getroot()
     except IOError as err:
-        error_and_exit("Failed to read xml_file: {} (exit)".format(str(err)))
+        error_and_exit(f"Failed to read xml_file: {str(err)} (exit)")
     except etree.Error as err:
-        error_and_exit("Failed to parse xml_file: {} (exit)".format(str(err)))
+        error_and_exit(f"Failed to parse xml_file: {str(err)} (exit)")
 
     if len(xml_tree) == 0:
         error_and_exit("XML file is empty (exit)")

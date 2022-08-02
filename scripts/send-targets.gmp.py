@@ -46,12 +46,8 @@ def parse_send_xml_tree(gmp, xml_tree):
         'esxi_credential',
         'snmp_credential',
     ]
-    counter = 1
-
-    for target in xml_tree.xpath('target'):
-        keywords = {}  # {'make_unique': True}
-
-        keywords['name'] = target.find('name').text
+    for counter, target in enumerate(xml_tree.xpath('target'), start=1):
+        keywords = {'name': target.find('name').text}
 
         keywords['hosts'] = target.find('hosts').text.split(',')
 
@@ -71,24 +67,21 @@ def parse_send_xml_tree(gmp, xml_tree):
                 continue
             if cred_id not in credentials:
                 response = yes_or_no(
-                    "\nThe credential '{}' for 'target {}' could not be "
-                    "located...\nWould you like to continue?".format(
-                        credential, counter
-                    )
+                    f"\nThe credential '{credential}' for 'target {counter}' could not be located...\nWould you like to continue?"
                 )
 
-                if response is False:
-                    print("Terminating...\n")
-                    sys.exit()
-                else:
+
+                if response is not False:
                     continue
 
-            key = '{}_id'.format(credential)
+                print("Terminating...\n")
+                sys.exit()
+            key = f'{credential}_id'
             keywords[key] = cred_id
             elem_path = target.find(credential)
             port = elem_path.find('port')
             if port is not None and port.text is not None:
-                port_key = '{}_port'.format(credential)
+                port_key = f'{credential}_port'
                 keywords[port_key] = elem_path.find('port').text
 
         alive_test = get_alive_test_from_string(target.find('alive_tests').text)
@@ -116,8 +109,6 @@ def parse_send_xml_tree(gmp, xml_tree):
         print(keywords)
 
         gmp.create_target(**keywords)
-
-        counter += 1
 
 
 def main(gmp, args):

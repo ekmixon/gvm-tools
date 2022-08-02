@@ -25,7 +25,7 @@ def clean_sensor(gmp):
     )
 
     for tid in tasks.xpath('task/@id'):
-        print('Removing task %s ... ' % tid)
+        print(f'Removing task {tid} ... ')
         status_text = gmp.delete_task(tid, ultimate=True).xpath('@status_text')[
             0
         ]
@@ -33,7 +33,7 @@ def clean_sensor(gmp):
 
     targets = gmp.get_targets(filter="rows=-1 not _owner=&quot;&quot;")
     for tid in targets.xpath('target/@id'):
-        print('Removing target %s ... ' % tid)
+        print(f'Removing target {tid} ... ')
         status_text = gmp.delete_target(tid, ultimate=True).xpath(
             '@status_text'
         )[0]
@@ -41,7 +41,7 @@ def clean_sensor(gmp):
 
     configs = gmp.get_configs(filter="rows=-1 not _owner=&quot;&quot;")
     for cid in configs.xpath('config/@id'):
-        print('Removing config %s ... ' % cid)
+        print(f'Removing config {cid} ... ')
         status_text = gmp.delete_config(cid, ultimate=True).xpath(
             '@status_text'
         )[0]
@@ -49,7 +49,7 @@ def clean_sensor(gmp):
 
     port_lists = gmp.get_port_lists(filter="rows=-1 not _owner=&quot;&quot;")
     for pid in port_lists.xpath('port_list/@id'):
-        print('Removing port_list %s ... ' % pid)
+        print(f'Removing port_list {pid} ... ')
         status_text = gmp.delete_port_list(pid, ultimate=True).xpath(
             '@status_text'
         )[0]
@@ -57,7 +57,7 @@ def clean_sensor(gmp):
 
     credentials = gmp.get_credentials(filter="rows=-1 not _owner=&quot;&quot;")
     for cid in credentials.xpath('credential/@id'):
-        print('Removing credential %s ... ' % cid)
+        print(f'Removing credential {cid} ... ')
         status_text = gmp.delete_credential(cid, ultimate=True).xpath(
             '@status_text'
         )[0]

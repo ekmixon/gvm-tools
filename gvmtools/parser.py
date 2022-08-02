@@ -129,9 +129,7 @@ class CliParser:
     def parse_args(self, args=None):
         args, unkown_args = self.parse_known_args(args)
         if unkown_args:
-            self._parser.error(
-                'unrecognized arguments {}'.format(' '.join(unkown_args))
-            )
+            self._parser.error(f"unrecognized arguments {' '.join(unkown_args)}")
         return args
 
     def parse_known_args(self, args=None):

@@ -22,7 +22,8 @@ import sys
 
 def check_args(args):
     len_args = len(args.script) - 1
-    message = """
+    if len_args != 2:
+        message = """
         This script starts a new scan on the given host.
         It needs one parameters after the script name.
 
@@ -33,14 +34,13 @@ def check_args(args):
             $ gvm-script --gmp-username name --gmp-password pass \
 ssh --hostname <gsm> scripts/scan-new-system.gmp.py <host_ip> <port_list_id>
     """
-    if len_args != 2:
         print(message)
         sys.exit()
 
 
 def create_target(gmp, ipaddress, port_list_id):
     # create a unique name by adding the current datetime
-    name = "Suspect Host {} {}".format(ipaddress, str(datetime.datetime.now()))
+    name = f"Suspect Host {ipaddress} {str(datetime.datetime.now())}"
 
     response = gmp.create_target(
         name=name, hosts=[ipaddress], port_list_id=port_list_id
@@ -49,7 +49,7 @@ def create_target(gmp, ipaddress, port_list_id):
 
 
 def create_task(gmp, ipaddress, target_id, scan_config_id, scanner_id):
-    name = "Scan Suspect Host {}".format(ipaddress)
+    name = f"Scan Suspect Host {ipaddress}"
     response = gmp.create_task(
         name=name,
         config_id=scan_config_id,
@@ -88,9 +88,7 @@ def main(gmp, args):
     report_id = start_task(gmp, task_id)
 
     print(
-        "Started scan of host {}. Corresponding report ID is {}".format(
-            ipaddress, report_id
-        )
+        f"Started scan of host {ipaddress}. Corresponding report ID is {report_id}"
     )
 
 
